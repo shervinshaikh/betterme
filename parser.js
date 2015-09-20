@@ -17,6 +17,8 @@ var getSendTime = function(text) {
             t.setHours(19);
         } else if (str.indexOf("midnight") > -1) {
             t.setHours(0);
+        } else if (str.indexOf("night") > -1) {
+            t.setHours(21);
         }
     }
 

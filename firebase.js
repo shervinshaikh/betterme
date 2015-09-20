@@ -34,11 +34,16 @@ module.exports = {
   createReminder: function(reminder){
     remindersRef.push(reminder);
   },
+  removeAllReminders: function (phoneNumber) {
+    remindersRef.child(phoneNumber).once("value", function(snap) {
+      snap.ref().remove();
+    });
+  },
   createFollowUp: function(reminder){
     followUpsRef.child(reminder.phoneNumber).set(reminder);
   },
-  removeFollowup: function (phoneNumber) {
-    followUpsRef.child(phoneNumber).once("value", function(snap) {
+  removeAllFollowups: function (phoneNumber) {
+    followUpsRef.child(86400000).once("value", function(snap) {
       snap.ref().remove();
     });
   },
@@ -49,8 +54,6 @@ module.exports = {
       .endAt(time.getTime())
       .on('child_added', function (snap) {
         var reminder = snap.val();
-
-        callback(reminder);
 
         console.log('');
         console.log(reminder.phoneNumber);
@@ -69,7 +72,8 @@ module.exports = {
         reminder.sendTime += extraMinutes;
         // reminder.sendTime += reminder.interval;
         // reminder.interval = 5 * 60000; // 5 min
-        db.createFollowUp(reminder);
+
+        callback(reminder);
       });
   },
   incrementCurrentFollowups: function(callback) {
