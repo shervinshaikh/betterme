@@ -47,7 +47,11 @@ var processText = function (request) {
     // Process 
     if (firstWord == "remind") {
       // Create Reminder
-      var interval = "tomorrow " + request.text.split(' every ')[1];
+      var intervalStr = request.text.split(' every ')[1];
+      var interval = chrono.parseDate(intervalStr);
+      if (interval < new Date()) {
+        interval = chrono.parseDate("tomorrow " + intervalStr);
+      }
       var reminder = {
         phoneNumber: request.number,
         text: request.text,
@@ -58,30 +62,13 @@ var processText = function (request) {
       db.createReminder(reminder);
 
     } else if (firstWord == "no") {
-      if (true) { // If responding to reminder
-        // Create Followup
-        var followup = {
-          phoneNumber: request.number,
-          text: 'brush teeth',
-          interval: 300000, // 24 hours = daily
-          sendTime: new Date().getTime(),
-          state: 2, // 0 - reminder, 1 - first follow up, 2 - second follup up, etc
-        };
-        db.createFollowUp(followup);
-        // Increment reminder
-        // TODO
-
-      } else { // If responding to followup
-        // Increment Followup
-
+      if (request.text.split('no')[1].length > 0) { // if thre is a reason
+        // Delete followup
+        removeFollowup(request.number);
       }
     } else if (firstWord == "yes") {
-      if (true) { // If responding to reminder
-        // Increment reminder
-
-      } else { // If responding to followup
-        // Delete followup
-      }
+      // Delete followup
+        removeFollowup(request.number);
     } else { // Invalid
       request.response.message('I didn\'t understand that.');
     }

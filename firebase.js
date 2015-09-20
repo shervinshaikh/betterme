@@ -59,6 +59,11 @@ module.exports = {
     //   snap.ref().remove();
     // });
   },
+  removeFollowup: function (phoneNumber) {
+    followUpsRef.orderByChild("phoneNumber").equalTo(phoneNumber).on("child_added", function(snapshot) {
+      snap.ref().remove();
+    });
+  },
   getFollowUpsAtTime: function(time){
   //   followUpsRef.on('child_added', function(snap){
   //     var reminder = snap.val();
