@@ -2,11 +2,11 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var cron = require('cron');
 var Firebase = require('firebase');
-var chrono = require('chrono-node');
 
 // FILES
 var twilioWrapper = require("./twilio");
 var db = require('./firebase');
+var parser = require('./parser');
 
 // FIREBASE
 var fbRef = new Firebase('https://betterme-data.firebaseio.com/');
@@ -19,7 +19,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.post('/getText', function (req, res) {
 	var request = twilioWrapper.parseRequest(req);
   // console.log(request);
-  preprocessText(request, res);
+  signupAndProcessText(request, res);
 });
 var server = app.listen(3000, function () {
   var host = server.address().address;
@@ -28,7 +28,7 @@ var server = app.listen(3000, function () {
   console.log('BetterMe listening at http://%s:%s', host, port);
 });
 
-var preprocessText = function (request, res) {
+var signupAndProcessText = function (request, res) {
   db.getUser(request.number, function (user) {
     // Signup
     console.log("User: ");
@@ -48,41 +48,30 @@ var preprocessText = function (request, res) {
     } else {
       processText(request);
     }
-      res.writeHead(200, {
-        'Content-Type':'text/xml'
-      });
-      res.end(request.response && request.response.toString());
+    res.writeHead(200, {
+      'Content-Type':'text/xml'
+    });
+    res.end(request.response && request.response.toString());
   });
 };
 
 var processText = function (request) {
-  var firstWord = request.text.split(' ')[0].toLowerCase();
+  var text = request.text.toLowerCase();
+  var firstWord = text.split(' ')[0];
   // Process
   if (firstWord == "remind") {
-    // Get sendTime
-    var intervalStr = request.text.split(' every ')[1];
-    var interval = chrono.parseDate(intervalStr);
-    if (interval < new Date()) {
-      interval = chrono.parseDate("tomorrow " + intervalStr);
-    }
-    console.log("Interval: " + interval);
-
-    // Get text of reminder
-    var remindStr = request.text.split(' every ')[0];
-    remindStr = remindStr.toLowerCase().split('remind me to ')[1];
 
     // Store reminder
-    var reminder = {
+    db.createReminder({
       phoneNumber: request.number,
-      text: remindStr,
-      interval: 86400000, // 24 hours = daily
-      sendTime: interval.getTime(),
+      text: parser.getReminderText(text),
+      interval: parser.getSendInterval(text),
+      sendTime: parser.getSendTime(text),
       state: 0, // 0 - reminder, 1 - first follow up, 2 - second follup up, etc
-    };
-    db.createReminder(reminder);
+    });
     request.response.message('Okay I\'ll remind you');
   } else if (firstWord == "no") {
-    if (request.text.toLowerCase().split('no')[1].length > 0) { // if there is a reason after no
+    if (text.split('no')[1].indexOf("because") > -1) { // if there is a reason after no
 
       // Delete followup
       db.removeFollowup(request.number);
@@ -95,16 +84,14 @@ var processText = function (request) {
   }
 };
 
-var sendRemindersAtTime = function(time){
-  var end = new Date(time);
-  end.setSeconds(end.getSeconds()+59);
+var sendReminders = function(){
+  var time = new Date();
 
   // TODO: wrap and place into firebase.js
   // REMINDERS
   remindersRef
   .orderByChild('sendTime')
-  // .startAt(time.getTime())
-  .endAt(end.getTime())
+  .endAt(time.getTime())
   .on('child_added', function(snap){
     var reminder = snap.val();
     console.log('');
@@ -116,16 +103,10 @@ var sendRemindersAtTime = function(time){
     remindersRef.child(snap.key()).update({
       sendTime: reminder.sendTime + reminder.interval
     });
-//     snap.ref().update({
-//       sendTime: reminder.sendTime + reminder.interval
-//     });
-    // snap.ref().child('sendTime').update(reminder.sendTime + reminder.interval);
 
-    console.log("updated");
     // TWILIO - Send reminder
-    var fullText = "Did you " + reminder.text.replace(/ /g,'') + " yet?";
-    twilioWrapper.sendText(fullText, reminder.phoneNumber);
-    console.log("Sending reminder: " + reminder.text);
+    twilioWrapper.sendText(reminder.text, reminder.phoneNumber);
+
 
     // Create follow up
     reminder.state += 1;
@@ -140,8 +121,7 @@ var sendRemindersAtTime = function(time){
   // FOLLOW UPS
   followUpsRef
   .orderByChild('sendTime')
-  // .startAt(time.getTime())
-  .endAt(end.getTime())
+  .endAt(time.getTime())
   .on('child_added', function(snap){
     var reminder = snap.val();
     console.log('');
@@ -149,9 +129,7 @@ var sendRemindersAtTime = function(time){
     console.log(reminder.text);
 
     // TWILIO - Send follow up
-    var fullText = "Did you " + reminder.text.replace(/^\s+|\s+$/g,'') + " yet?";
-    twilioWrapper.sendText(fullText, reminder.phoneNumber);
-    console.log("Sending reminder: " + reminder.text);
+    twilioWrapper.sendText(reminder.text, reminder.phoneNumber);
 
     // INCREMENT follow up
     reminder.state += 1;
@@ -170,8 +148,6 @@ var sendRemindersAtTime = function(time){
 };
 
 var cronJob = cron.job("0 * * * * *", function(){
-  var now = new Date();
-  sendRemindersAtTime(now);
-  console.log(now);
+  sendReminders();
 });
 cronJob.start();
