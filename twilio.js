@@ -16,10 +16,11 @@ module.exports = {
   },
   parseRequest: function (req) {
 	var resp = new twilio.TwimlResponse();
+
 	return {
 		response: resp,
-		text: req.Body,
-		number: req.body.from
+		text: req.body.Body,
+		number: req.body.From
 	};
   }
 };

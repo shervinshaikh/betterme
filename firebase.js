@@ -9,7 +9,7 @@ module.exports = {
   // true/false if succeeded
   createUser: function(phoneNumber){
     var user = {
-      phoneNumber: phoneNumber.toString(),
+      phoneNumber: phoneNumber,
       name: null,
       email: null
       // currentState: 'registered' // or 0? do we need this?
@@ -31,12 +31,10 @@ module.exports = {
   //   name: 'Shervin Shaikh',
   //   email: 'shervin@gmail.com',
   // }
-  getUser: function(phoneNumber){
-    // TODO
-    // usersRef.on('value', function(snap){
-    //   return snap.val();
-    // });
-    // return 'hello';
+  getUser: function(phoneNumber, callback){
+    usersRef.child(phoneNumber).once("value", function(snap) {
+      callback(snap.val());
+    });
   },
   // var reminder = {
   //   phoneNumber: '9494194999',
@@ -60,7 +58,7 @@ module.exports = {
     // });
   },
   removeFollowup: function (phoneNumber) {
-    followUpsRef.orderByChild("phoneNumber").equalTo(phoneNumber).on("child_added", function(snapshot) {
+    followUpsRef.child(phoneNumber).once("value", function(snap) {
       snap.ref().remove();
     });
   },

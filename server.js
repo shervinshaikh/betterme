@@ -18,11 +18,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.post('/getText', function (req, res) {
 	var request = twilioWrapper.parseRequest(req);
-  processText(request);
+  // console.log(request);
+  preprocessText(request);
+
   res.writeHead(200, {
     'Content-Type':'text/xml'
   });
-  res.end(request.resp.toString());
+  res.end(request.resp && request.resp.toString());
 });
 var server = app.listen(3000, function () {
   var host = server.address().address;
@@ -31,17 +33,34 @@ var server = app.listen(3000, function () {
   console.log('BetterMe listening at http://%s:%s', host, port);
 });
 
+var preprocessText = function (request) {
+  db.getUser(request.number, function (user) {
+    // Signup
+    console.log("User: ");
+    console.log(user);
+    if (user === null) { // If user does not exist
+      // console.log(typeof(request.number));
+      // console.log(request.number);
+
+      db.createUser(request.number);
+      console.log(request.number);
+      request.response.message('Hi just reply with your name to signup');
+    } else if (user.name === undefined) { // If user needs name
+      db.setName(request.number, request.text);
+      console.log(request.text);
+      request.response.message('Great! What\'s your email?');
+    } else if (user.email === undefined) { // If user needs email
+      db.setEmail(request.number, request.text);
+      console.log(request.text);
+      request.response.message('Excellent you\'re all signed up. What would you like to do? You can say "Remind me to _____ every _____"');
+    } else {
+      processText(request);
+    }
+  });
+};
 
 var processText = function (request) {
-
-  // Signup
-  if (true) { // If user does not exist
-    db.createUser(request.number);
-  } else if (true) { // If user needs name
-    db.setName(request.number, request.text);
-  } else if (true) { // If user needs email
-    db.setEmail(request.number, request.text);
-  } else {
+  // } else {
 
     var firstWord = request.text.split(' ')[0].toLowerCase();
     // Process 
@@ -52,11 +71,12 @@ var processText = function (request) {
       if (interval < new Date()) {
         interval = chrono.parseDate("tomorrow " + intervalStr);
       }
+      console.log("Interval: " + interval);
       var reminder = {
         phoneNumber: request.number,
         text: request.text,
         interval: 86400000, // 24 hours = daily
-        sendTime: interval,
+        sendTime: interval.getTime(),
         state: 0, // 0 - reminder, 1 - first follow up, 2 - second follup up, etc
       };
       db.createReminder(reminder);
@@ -64,15 +84,15 @@ var processText = function (request) {
     } else if (firstWord == "no") {
       if (request.text.split('no')[1].length > 0) { // if thre is a reason
         // Delete followup
-        removeFollowup(request.number);
+        db.removeFollowup(request.number);
       }
     } else if (firstWord == "yes") {
       // Delete followup
-        removeFollowup(request.number);
+        db.removeFollowup(request.number);
     } else { // Invalid
       request.response.message('I didn\'t understand that.');
     }
-  }
+  // }
 };
 
 var sendRemindersAtTime = function(time){
