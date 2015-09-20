@@ -91,9 +91,8 @@ var processText = function (request) {
 var sendRemindersAtTime = function(time){
   var end = new Date(time);
   end.setSeconds(end.getSeconds()+59);
-  console.log(time);
-  console.log(end);
 
+  // TODO: wrap and place into firebase.js
   // REMINDERS
   remindersRef
   .orderByChild('sendTime')
@@ -145,6 +144,9 @@ var sendRemindersAtTime = function(time){
       reminder.sendTime += extraMinutes;
       // reminder.sendTime += reminder.interval;
       snap.ref().update(reminder);
+    } else {
+      // Remove follow up if exceed number above
+      snap.ref().remove();
     }
   });
 };
