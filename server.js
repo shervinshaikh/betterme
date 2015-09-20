@@ -10,7 +10,9 @@ var parser = require('./parser');
 
 var app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
-
+app.get('/', function (req, res) {
+  res.send('Hello World!');
+});
 app.post('/getText', function (req, res) {
 	var request = twilioWrapper.parseRequest(req);
   db.getUser(request.number, function (user) {
