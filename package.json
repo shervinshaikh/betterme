@@ -15,5 +15,10 @@
   "bugs": {
     "url": "https://github.com/shervinshaikh/betterme/issues"
   },
-  "homepage": "https://github.com/shervinshaikh/betterme#readme"
+  "homepage": "https://github.com/shervinshaikh/betterme#readme",
+  "dependencies": {
+    "body-parser": "^1.14.0",
+    "express": "^4.13.3",
+    "twilio": "^2.3.0"
+  }
 }
