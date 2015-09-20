@@ -80,7 +80,7 @@ var processText = function (request) {
       state: 0, // 0 - reminder, 1 - first follow up, 2 - second follup up, etc
     };
     db.createReminder(reminder);
-
+    request.response.message('Okay I\'ll remind you');
   } else if (firstWord == "no") {
     if (request.text.split('no')[1].length > 0) { // if there is a reason after no
 
@@ -103,7 +103,7 @@ var sendRemindersAtTime = function(time){
   // REMINDERS
   remindersRef
   .orderByChild('sendTime')
-  .startAt(time.getTime())
+  // .startAt(time.getTime())
   .endAt(end.getTime())
   .on('child_added', function(snap){
     var reminder = snap.val();
@@ -113,10 +113,19 @@ var sendRemindersAtTime = function(time){
     console.log('reminder');
 
     // Increment Reminder
-    snap.ref().child('sendTime').update(reminder.sendTime + reminder.interval);
+    remindersRef.child(snap.key()).update({
+      sendTime: reminder.sendTime + reminder.interval
+    });
+//     snap.ref().update({
+//       sendTime: reminder.sendTime + reminder.interval
+//     });
+    // snap.ref().child('sendTime').update(reminder.sendTime + reminder.interval);
 
+    console.log("updated");
     // TWILIO - Send reminder
-
+    var fullText = "Did you " + reminder.text.replace(/ /g,'') + " yet?";
+    twilioWrapper.sendText(fullText, reminder.phoneNumber);
+    console.log("Sending reminder: " + reminder.text);
 
     // Create follow up
     reminder.state += 1;
@@ -131,7 +140,7 @@ var sendRemindersAtTime = function(time){
   // FOLLOW UPS
   followUpsRef
   .orderByChild('sendTime')
-  .startAt(time.getTime())
+  // .startAt(time.getTime())
   .endAt(end.getTime())
   .on('child_added', function(snap){
     var reminder = snap.val();
@@ -140,7 +149,9 @@ var sendRemindersAtTime = function(time){
     console.log(reminder.text);
 
     // TWILIO - Send follow up
-
+    var fullText = "Did you " + reminder.text.replace(/^\s+|\s+$/g,'') + " yet?";
+    twilioWrapper.sendText(fullText, reminder.phoneNumber);
+    console.log("Sending reminder: " + reminder.text);
 
     // INCREMENT follow up
     reminder.state += 1;

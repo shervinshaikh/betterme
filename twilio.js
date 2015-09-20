@@ -8,7 +8,7 @@ module.exports = {
   sendText: function (text, number) {
 	client.messages.create({
 	    body: text,
-	    to: "+1" + number,
+	    to: number,
 	    from: "+15106835361" // BetterMe Twilio Number
 	}, function(err, message) {
 	    process.stdout.write(message.sid);
