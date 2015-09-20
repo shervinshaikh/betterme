@@ -1,7 +1,10 @@
 var chrono = require('chrono-node');
 
 var getSendTime = function(text) {
-    var str = text.toLowerCase().split(' every')[1];
+    var str = text.toLowerCase();
+	if ((text.toLowerCase().indexOf("every") > -1)) {
+	    str = text.toLowerCase().split(' every')[1];
+	}
     var t = chrono.parseDate(str);
 
     t = t || new Date(); // If not able to parse
@@ -30,7 +33,10 @@ var getSendTime = function(text) {
     return t.getTime();
 };
 var getSendInterval = function(text) {
-    var i = text.toLowerCase().split(' every')[1];
+	var i = text.toLowerCase();
+	if ((text.toLowerCase().indexOf("every") > -1)) {
+	    i = text.toLowerCase().split(' every')[1];
+	}
     if (i.indexOf("month") > -1) {
         return 1000 * 60 * 60 * 24 * 30;
     } else if (i.indexOf("week") > -1 ||
@@ -52,16 +58,30 @@ var getSendInterval = function(text) {
     }
 };
 var getReminderText = function(text) {
-    var remindStr = text.toLowerCase().split(' every')[0];
+	var remindStr = text.toLowerCase();
+	if ((remindStr.toLowerCase().indexOf("every") > -1)) {
+	    remindStr = text.toLowerCase().split(' every')[0];
+	}
     remindStr = remindStr
     				.split('remind me to ')[1] // Get the verb
     				.replace(/ my /g, ' your ') // Convert first person to second person
     				.replace(/^\s+|\s+$/g,''); // Remove leading and trailing whitespace
     return "Did you " + remindStr + " yet?";
 };
-
+var getReminderAction = function(text) {
+	var remindStr = text.toLowerCase();
+	if ((remindStr.toLowerCase().indexOf("every") > -1)) {
+	    remindStr = text.toLowerCase().split(' every')[0];
+	}
+    remindStr = remindStr
+    				.split('remind me to ')[1] // Get the verb
+    				.replace(/ my /g, ' your ') // Convert first person to second person
+    				.replace(/^\s+|\s+$/g,''); // Remove leading and trailing whitespace
+    return remindStr;
+};
 module.exports = {
     getSendTime: getSendTime,
     getSendInterval: getSendInterval,
-    getReminderText: getReminderText
+    getReminderText: getReminderText,
+    getReminderAction: getReminderAction
 };

@@ -41,13 +41,17 @@ module.exports = {
     remindersRef.push(reminder);
   },
   removeAllReminders: function (phoneNumber) {
-    // Not working. Removes all reminders of all users.
-    // remindersRef
-    // .startAt(phoneNumber)
-    // .endAt(phoneNumber)
-    // .once("value", function(snap) {
-    //   snap.ref().remove();
-    // });
+    remindersRef
+      .orderByChild("phoneNumber")
+      .equalTo(phoneNumber)
+      .once("child_added", function(snap) {
+      var reminder = snap.val();
+      console.log(reminder);
+      if (reminder.phoneNumber == phoneNumber) {
+        snap.ref().remove();
+      }
+
+    });
   },
   createFollowUp: function(reminder){
     followUpsRef.child(reminder.phoneNumber).set(reminder);
