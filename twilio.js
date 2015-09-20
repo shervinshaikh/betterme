@@ -14,14 +14,13 @@ module.exports = {
 	    process.stdout.write(message.sid);
 	});
   },
-  receive: function (req) {
-	  var resp = new twilio.TwimlResponse();
-	  console.log("received");
-	  console.log(req.body.Body);
-	  console.log(req.body.from);
-	  console.log(req.body);
-	  resp.message('You said ' + req.body.Body);
-	return resp.toString();
+  parseRequest: function (req) {
+	var resp = new twilio.TwimlResponse();
+	return {
+		response: resp,
+		text: req.Body,
+		number: req.body.from
+	};
   }
 };
 
