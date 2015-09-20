@@ -35,15 +35,19 @@ module.exports = {
     remindersRef.push(reminder);
   },
   removeAllReminders: function (phoneNumber) {
-    remindersRef.child(phoneNumber).once("value", function(snap) {
-      snap.ref().remove();
-    });
+    // Not working. Removes all reminders of all users.
+    // remindersRef
+    // .startAt(phoneNumber)
+    // .endAt(phoneNumber)
+    // .once("value", function(snap) {
+    //   snap.ref().remove();
+    // });
   },
   createFollowUp: function(reminder){
     followUpsRef.child(reminder.phoneNumber).set(reminder);
   },
   removeAllFollowups: function (phoneNumber) {
-    followUpsRef.child(86400000).once("value", function(snap) {
+    followUpsRef.child(phoneNumber).once("value", function(snap) {
       snap.ref().remove();
     });
   },
