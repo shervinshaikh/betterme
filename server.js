@@ -19,12 +19,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.post('/getText', function (req, res) {
 	var request = twilioWrapper.parseRequest(req);
   // console.log(request);
-  preprocessText(request);
-
-  res.writeHead(200, {
-    'Content-Type':'text/xml'
-  });
-  res.end(request.resp && request.resp.toString());
+  preprocessText(request, res);
 });
 var server = app.listen(3000, function () {
   var host = server.address().address;
@@ -33,15 +28,12 @@ var server = app.listen(3000, function () {
   console.log('BetterMe listening at http://%s:%s', host, port);
 });
 
-var preprocessText = function (request) {
+var preprocessText = function (request, res) {
   db.getUser(request.number, function (user) {
     // Signup
     console.log("User: ");
     console.log(user);
     if (user === null) { // If user does not exist
-      // console.log(typeof(request.number));
-      // console.log(request.number);
-
       db.createUser(request.number);
       console.log(request.number);
       request.response.message('Hi just reply with your name to signup');
@@ -56,20 +48,24 @@ var preprocessText = function (request) {
     } else {
       processText(request);
     }
+      res.writeHead(200, {
+        'Content-Type':'text/xml'
+      });
+      res.end(request.response && request.response.toString());
   });
 };
 
 var processText = function (request) {
   // } else {
-
     var firstWord = request.text.split(' ')[0].toLowerCase();
     // Process 
     if (firstWord == "remind") {
       // Create Reminder
       var intervalStr = request.text.split(' every ')[1];
+      console.log("Interval String: " + intervalStr);
       var interval = chrono.parseDate(intervalStr);
       if (interval < new Date()) {
-        interval = chrono.parseDate("tomorrow " + intervalStr);
+        interval.setDate(interval.getDate() + 1);
       }
       console.log("Interval: " + interval);
       var reminder = {
@@ -80,7 +76,7 @@ var processText = function (request) {
         state: 0, // 0 - reminder, 1 - first follow up, 2 - second follup up, etc
       };
       db.createReminder(reminder);
-
+      request.response.message('Okay I\'ll remind you!');
     } else if (firstWord == "no") {
       if (request.text.split('no')[1].length > 0) { // if thre is a reason
         // Delete followup
