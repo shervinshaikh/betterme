@@ -11,7 +11,8 @@ module.exports = {
     var user = {
       phoneNumber: phoneNumber,
       name: null,
-      email: null
+      email: null,
+      completed: 0
       // currentState: 'registered' // or 0? do we need this?
     };
     usersRef.child(phoneNumber).set(user, isDataSaved);
@@ -29,6 +30,11 @@ module.exports = {
   getUser: function(phoneNumber, callback){
     usersRef.child(phoneNumber).once("value", function(snap) {
       callback(snap.val());
+    });
+  },
+  showProgress: function (phoneNumber, callback) {
+    usersRef.child(phoneNumber).child("completed").once("value", function(snap) {
+      callback(snap.val() || 0);
     });
   },
   createReminder: function(reminder){
@@ -49,6 +55,9 @@ module.exports = {
   removeAllFollowups: function (phoneNumber) {
     followUpsRef.child(phoneNumber).once("value", function(snap) {
       snap.ref().remove();
+      usersRef.child(phoneNumber).child("completed").transaction(function(value) {
+        return (value || 0) + 1;
+      });
     });
   },
   incrementCurrentReminders: function(callback) {

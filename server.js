@@ -89,10 +89,25 @@ var processText = function (request) {
     // Delete followup
     db.removeAllFollowups(request.number);
 
-  } else if (text == 'remove all reminders') {
-    console.log('remove all reminders');
-    // Delete followup
-    db.removeAllReminders(request.number);
+  } else if (firstWord == 'remove') {
+    if (text.indexOf('reminders') > -1) {
+      console.log('remove all reminders');
+      // Delete followup
+      db.removeAllReminders(request.number);
+    }
+
+  } else if (firstWord.indexOf('what') > -1) {
+    if (text.indexOf('progress') > -1) {
+      console.log('show progress');
+      // Delete followup
+      db.showProgress(request.number, function (completed) {
+        var plural = "";
+        if (completed > 1) {
+          plural = "s";
+        }
+        twilioWrapper.sendText("You've completed " + completed + " challenge" + plural + "!", request.number);
+      });
+    }
 
   } else if (text == 'better help') {
     console.log('help');

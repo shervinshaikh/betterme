@@ -54,9 +54,10 @@ var getSendInterval = function(text) {
 var getReminderText = function(text) {
     var remindStr = text.toLowerCase().split(' every')[0];
     remindStr = remindStr
-    				.split('remind me to ')[1]
-    				.replace(/ my /g, ' your ');
-    return remindStr;
+    				.split('remind me to ')[1] // Get the verb
+    				.replace(/ my /g, ' your ') // Convert first person to second person
+    				.replace(/^\s+|\s+$/g,''); // Remove leading and trailing whitespace
+    return "Did you " + remindStr + " yet?";
 };
 
 module.exports = {

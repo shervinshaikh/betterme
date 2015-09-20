@@ -7,7 +7,7 @@ var client = twilio(accountSid, authToken);
 module.exports = {
   sendText: function (reminderText, number) {
 	client.messages.create({
-	    body: "Did you " + reminderText.replace(/^\s+|\s+$/g,'') + " yet?",
+	    body: reminderText,
 	    to: number,
 	    from: "+15106835361" // BetterMe Twilio Number
 	}, function(err, message) {
