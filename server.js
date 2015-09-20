@@ -11,7 +11,7 @@ var parser = require('./parser');
 var app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.get('/', function (req, res) {
-  res.send('Hello World!');
+  res.send('You\'ve reached BetterMe.Club');
 });
 app.post('/getText', function (req, res) {
 	var request = twilioWrapper.parseRequest(req);
@@ -31,11 +31,13 @@ app.post('/getText', function (req, res) {
     console.log("sent response");
   });
 });
-var server = app.listen(process.env.PORT || 8080, function () {
+
+var port = (process && process.env && process.env.PORT) || 8080;
+var server = app.listen(port, function () {
   var host = server.address().address;
   var port = server.address().port;
 
-  console.log('BetterMe listening at http://%s:%s', host, port);
+  console.log('BetterMe.Club listening at http://%s:%s', host, port);
 });
 
 var cronJob = cron.job('0 * * * * *', function(){
