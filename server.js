@@ -44,7 +44,7 @@ var processText = function (request) {
   } else {
 
     var firstWord = request.text.split(' ')[0].toLowerCase();
-    // Process 
+    // Process
     if (firstWord == "remind") {
       // Create Reminder
       var interval = "tomorrow " + request.text.split(' every ')[1];
@@ -77,7 +77,7 @@ var processText = function (request) {
       }
     } else if (firstWord == "yes") {
       if (true) { // If responding to reminder
-        // Increment reminder
+        // Increment reminder or delete all follow ups
 
       } else { // If responding to followup
         // Delete followup
@@ -90,7 +90,9 @@ var processText = function (request) {
 
 var sendRemindersAtTime = function(time){
   var end = new Date(time);
-  end.setSeconds(end.getSeconds()+60);
+  end.setSeconds(end.getSeconds()+59);
+  console.log(time);
+  console.log(end);
 
   // REMINDERS
   remindersRef
@@ -102,11 +104,10 @@ var sendRemindersAtTime = function(time){
     console.log('');
     console.log(reminder.phoneNumber);
     console.log(reminder.text);
-    console.log(reminder);
+    console.log('reminder');
 
     // Increment Reminder
-    reminder.sendTime += reminder.interval;
-    db.createReminder(reminder);
+    snap.ref().child('sendTime').update(reminder.sendTime + reminder.interval);
 
     // TWILIO - Send reminder
 
@@ -119,9 +120,6 @@ var sendRemindersAtTime = function(time){
     // reminder.sendTime += reminder.interval;
     // reminder.interval = 5 * 60000; // 5 min
     db.createFollowUp(reminder);
-
-    // Remove reminder & increment - FIX?
-    snap.ref().remove();
   });
 
   // FOLLOW UPS
@@ -138,21 +136,20 @@ var sendRemindersAtTime = function(time){
     // TWILIO - Send follow up
 
 
-    // Increment follow up
+    // INCREMENT follow up
     reminder.state += 1;
-    // reminder.sendTime += reminder.interval;
-    // TODO: change to some dynamic value depnding on state
-    var extraMinutes = 1 * 60000;
-    reminder.sendTime += extraMinutes;
-    db.createFollowUp(reminder);
+    if(reminder.state < 4){
 
-    // Remove reminder - FIX?
-    snap.ref().remove();
+      // TODO: change to some dynamic value depnding on state
+      var extraMinutes = 1 * 60000;
+      reminder.sendTime += extraMinutes;
+      // reminder.sendTime += reminder.interval;
+      snap.ref().update(reminder);
+    }
   });
 };
 
 var cronJob = cron.job("0 * * * * *", function(){
-  // console.log('cron');
   var now = new Date();
   sendRemindersAtTime(now);
   console.log(now);
