@@ -82,7 +82,7 @@ var processText = function (request) {
     db.createReminder(reminder);
     request.response.message('Okay I\'ll remind you');
   } else if (firstWord == "no") {
-    if (request.text.split('no')[1].length > 0) { // if there is a reason after no
+    if (request.text.toLowerCase().split('no')[1].length > 0) { // if there is a reason after no
 
       // Delete followup
       db.removeFollowup(request.number);
