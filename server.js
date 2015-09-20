@@ -50,12 +50,12 @@ var signup = function (user, request) {
   } else if (!user.name) { // If user needs name
     db.setName(request.number, request.text);
     console.log(request.text);
-    request.response.message('Hi ' + request.text + '! What\'s your email?');
+    request.response.message('One exotic name ' + request.text + '! What\'s your email?');
 
   } else if (!user.email) { // If user needs email
     db.setEmail(request.number, request.text);
     console.log(request.text + ' completed signup');
-    request.response.message('You\'re all set! What would you like to do? You can say something like \'Remind me to take my pills every morning at 8am\'');
+    request.response.message('You\'re all set dude! What would you like to do? You can say something like \'Remind me to take my pills every morning at 8am\'');
   }
 };
 
@@ -73,7 +73,7 @@ var processText = function (request) {
       sendTime: parser.getSendTime(text),
       state: 0, // 0 - reminder, 1 - first follow up, 2 - second follup up, etc
     });
-    request.response.message('Okay I\'ll remind you to ' + parser.getReminderText(text));
+    request.response.message('Cool cool, I\'ll remind you to ' + parser.getReminderText(text));
 
   } else if (firstWord == 'no' || firstWord == 'not') {
     console.log('no');
@@ -100,7 +100,7 @@ var processText = function (request) {
 
   } else { // Invalid
     console.log('invalid');
-    request.response.message('Sorry didn\'t catch that. Type \'better help\' to see how to use BetterMe');
+    request.response.message('Sorry friend didn\'t catch that. Type \'better help\' to see how to use BetterMe');
   }
 };
 

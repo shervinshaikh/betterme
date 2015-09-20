@@ -3,7 +3,7 @@ var twilio = require('twilio');
 var accountSid = 'AC80a0d744f7b5ba4d84161cc049ec6178';
 var authToken = "551d8b9ecff6d1fa3f86328d328c9c2b";
 var client = twilio(accountSid, authToken);
- 
+
 module.exports = {
   sendText: function (reminderText, number) {
 	client.messages.create({
