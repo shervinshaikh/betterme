@@ -18,7 +18,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.post('/getText', function (req, res) {
 	var resp = twilioWrapper.receive(req);
   res.writeHead(200, {
-	'Content-Type':'text/xml'
+    'Content-Type':'text/xml'
   });
   res.end(resp);
 });
@@ -26,7 +26,7 @@ var server = app.listen(3000, function () {
   var host = server.address().address;
   var port = server.address().port;
 
-  console.log('Example app listening at http://%s:%s', host, port);
+  console.log('BetterMe listening at http://%s:%s', host, port);
 });
 
 // CREATE USER
@@ -49,7 +49,7 @@ var server = app.listen(3000, function () {
 // var followup = {
 //   phoneNumber: '9494194999',
 //   text: 'brush teeth',
-//   interval: 300000, // 24 hours = daily
+//   interval: 300000,
 //   sendTime: new Date().getTime(),
 //   state: 2, // 0 - reminder, 1 - first follow up, 2 - second follup up, etc
 // }
@@ -60,30 +60,69 @@ var sendRemindersAtTime = function(time){
   var end = new Date(time);
   end.setSeconds(end.getSeconds()+60);
 
+  // REMINDERS
   remindersRef
   .orderByChild('sendTime')
-  // .startAt(time)
-  // .endAt(end)
+  .startAt(time.getTime())
+  .endAt(end.getTime())
   .on('child_added', function(snap){
     var reminder = snap.val();
-
+    console.log('');
+    console.log(reminder.phoneNumber);
+    console.log(reminder.text);
     console.log(reminder);
 
-    // send reminder on Twilio
+    // Increment Reminder
+    reminder.sendTime += reminder.interval;
+    db.createReminder(reminder);
 
-    // create follow up
+    // TWILIO - Send reminder
 
-    // Fix?
-    // snap.ref().remove();
+
+    // Create follow up
+    reminder.state += 1;
+    // TODO: change to some dynamic value depnding on state
+    var extraMinutes = 1 * 60000; // min to ms conversion
+    reminder.sendTime += extraMinutes;
+    // reminder.sendTime += reminder.interval;
+    // reminder.interval = 5 * 60000; // 5 min
+    db.createFollowUp(reminder);
+
+    // Remove reminder & increment - FIX?
+    snap.ref().remove();
+  });
+
+  // FOLLOW UPS
+  followUpsRef
+  .orderByChild('sendTime')
+  .startAt(time.getTime())
+  .endAt(end.getTime())
+  .on('child_added', function(snap){
+    var reminder = snap.val();
+    console.log('');
+    console.log(reminder.phoneNumber);
+    console.log(reminder.text);
+
+    // TWILIO - Send follow up
+
+
+    // Increment follow up
+    reminder.state += 1;
+    // reminder.sendTime += reminder.interval;
+    // TODO: change to some dynamic value depnding on state
+    var extraMinutes = 1 * 60000;
+    reminder.sendTime += extraMinutes;
+    db.createFollowUp(reminder);
+
+    // Remove reminder - FIX?
+    snap.ref().remove();
   });
 };
 
-// var now = new Date();
-// sendRemindersAtTime(now);
-
 var cronJob = cron.job("0 * * * * *", function(){
-  console.log('cron');
+  // console.log('cron');
   var now = new Date();
-  // sendRemindersAtTime(now);
+  sendRemindersAtTime(now);
   console.log(now);
 });
+cronJob.start();
