@@ -26,49 +26,80 @@ module.exports = {
       email: email
     }, isDataSaved);
   },
-  // var user = {
-  //   phoneNumber: '9494194999',
-  //   name: 'Shervin Shaikh',
-  //   email: 'shervin@gmail.com',
-  // }
   getUser: function(phoneNumber, callback){
     usersRef.child(phoneNumber).once("value", function(snap) {
       callback(snap.val());
     });
   },
-  // var reminder = {
-  //   phoneNumber: '9494194999',
-  //   text: 'take birth control',
-  //   interval: 86400000,
-  //   sendTime: new Date().getTime(),
-  //   state: 0, // 0 - reminder, 1 - first follow up, 2 - second follup up, etc
-  // }
   createReminder: function(reminder){
     remindersRef.push(reminder);
   },
   createFollowUp: function(reminder){
     followUpsRef.child(reminder.phoneNumber).set(reminder);
   },
-  getRemindersAtTime: function(time){
-    // remindersRef.on('child_added', function(snap){
-    //   var reminder = snap.val();
-
-    //   // TODO!
-    //   snap.ref().remove();
-    // });
-  },
   removeFollowup: function (phoneNumber) {
     followUpsRef.child(phoneNumber).once("value", function(snap) {
       snap.ref().remove();
     });
   },
-  getFollowUpsAtTime: function(time){
-  //   followUpsRef.on('child_added', function(snap){
-  //     var reminder = snap.val();
+  incrementCurrentReminders: function(callback) {
+    var time = new Date();
+    remindersRef
+      .orderByChild('sendTime')
+      .endAt(time.getTime())
+      .on('child_added', function (snap) {
+        var reminder = snap.val();
 
-  //     // TODO!
-  //     snap.ref().remove();
-  //   });
+        callback(reminder);
+
+        console.log('');
+        console.log(reminder.phoneNumber);
+        console.log(reminder.text);
+        console.log('reminder');
+
+        // Increment Reminder
+        remindersRef.child(snap.key()).update({
+          sendTime: reminder.sendTime + reminder.interval
+        });
+
+        // Create follow up
+        reminder.state += 1;
+        // TODO: change to some dynamic value depnding on state
+        var extraMinutes = 1 * 60000; // min to ms conversion
+        reminder.sendTime += extraMinutes;
+        // reminder.sendTime += reminder.interval;
+        // reminder.interval = 5 * 60000; // 5 min
+        db.createFollowUp(reminder);
+      });
+  },
+  incrementCurrentFollowups: function(callback) {
+    var time = new Date();
+    followUpsRef
+      .orderByChild('sendTime')
+      .endAt(time.getTime())
+      .on('child_added',  function(snap){
+        var reminder = snap.val();
+
+        callback(reminder);
+
+        console.log('');
+        console.log(reminder.phoneNumber);
+        console.log(reminder.text);
+
+        // INCREMENT follow up
+        reminder.state += 1;
+        if(reminder.state < 4){
+
+          // TODO: change to some dynamic value depnding on state
+          var extraMinutes = 1 * 60000;
+          reminder.sendTime += extraMinutes;
+          // reminder.sendTime += reminder.interval;
+          snap.ref().update(reminder);
+        } else {
+          // Remove follow up if exceed number above
+          snap.ref().remove();
+        }
+      });
   }
 };
 
@@ -79,9 +110,3 @@ function isDataSaved(e){
     // console.log('Data saved succesfully');
   }
 }
-
-
-// Create function that is not accesible outsite
-var doSomethingInternal = function () {
-  // do some
-};
