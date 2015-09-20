@@ -49,7 +49,7 @@ module.exports = {
     remindersRef.push(reminder);
   },
   createFollowUp: function(reminder){
-    followUpsRef.push(reminder);
+    followUpsRef.child(reminder.phoneNumber).set(reminder);
   },
   getRemindersAtTime: function(time){
     // remindersRef.on('child_added', function(snap){
