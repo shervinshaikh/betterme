@@ -60,39 +60,42 @@ var preprocessText = function (request) {
 };
 
 var processText = function (request) {
-  // } else {
-
-    var firstWord = request.text.split(' ')[0].toLowerCase();
-    // Process 
-    if (firstWord == "remind") {
-      // Create Reminder
-      var intervalStr = request.text.split(' every ')[1];
-      var interval = chrono.parseDate(intervalStr);
-      if (interval < new Date()) {
-        interval = chrono.parseDate("tomorrow " + intervalStr);
-      }
-      console.log("Interval: " + interval);
-      var reminder = {
-        phoneNumber: request.number,
-        text: request.text,
-        interval: 86400000, // 24 hours = daily
-        sendTime: interval.getTime(),
-        state: 0, // 0 - reminder, 1 - first follow up, 2 - second follup up, etc
-      };
-      db.createReminder(reminder);
-
-    } else if (firstWord == "no") {
-      if (request.text.split('no')[1].length > 0) { // if thre is a reason
-        // Delete followup
-        db.removeFollowup(request.number);
-      }
-    } else if (firstWord == "yes") {
-      // Delete followup
-        db.removeFollowup(request.number);
-    } else { // Invalid
-      request.response.message('I didn\'t understand that.');
+  var firstWord = request.text.split(' ')[0].toLowerCase();
+  // Process
+  if (firstWord == "remind") {
+    // Get sendTime
+    var intervalStr = request.text.split(' every ')[1];
+    var interval = chrono.parseDate(intervalStr);
+    if (interval < new Date()) {
+      interval = chrono.parseDate("tomorrow " + intervalStr);
     }
-  // }
+    console.log("Interval: " + interval);
+
+    // Get text of reminder
+    var remindStr = request.text.split(' every ')[0];
+    remindStr = remindStr.toLowerCase().split('remind me to ')[1];
+
+    // Store reminder
+    var reminder = {
+      phoneNumber: request.number,
+      text: remindStr,
+      interval: 86400000, // 24 hours = daily
+      sendTime: interval.getTime(),
+      state: 0, // 0 - reminder, 1 - first follow up, 2 - second follup up, etc
+    };
+    db.createReminder(reminder);
+
+  } else if (firstWord == "no") {
+    if (request.text.split('no')[1].length > 0) { // if thre is a reason
+      // Delete followup
+      db.removeFollowup(request.number);
+    }
+  } else if (firstWord == "yes") {
+    // Delete followup
+      db.removeFollowup(request.number);
+  } else { // Invalid
+    request.response.message('I didn\'t understand that.');
+  }
 };
 
 var sendRemindersAtTime = function(time){
